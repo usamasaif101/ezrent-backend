@@ -26,9 +26,10 @@ export default async function handler(req, res) {
     if (!listingRes.ok) throw new Error('Could not fetch listing');
     const data = await listingRes.json();
     const l = data.result;
-    if (!l.isBookingEngineActive) {
-  return res.status(404).json({ error: 'Listing not available' });
-  }
+
+    if (l.isBookingEngineActive === false || l.isBookingEngineActive === 0) {
+      return res.status(404).json({ error: 'Listing not available' });
+    }
 
     res.status(200).json({
       id: l.id, title: l.name, description: l.description,
