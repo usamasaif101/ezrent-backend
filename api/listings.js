@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*'); // tighten to your domain later
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
@@ -17,7 +17,14 @@ export default async function handler(req, res) {
     if (!tokenRes.ok) throw new Error('Could not get access token');
     const { access_token } = await tokenRes.json();
 
-    const listingsRes = await fetch('https://api.hostaway.com/v1/listings?limit=20', {
+    const { checkIn, checkOut, guests, location } = req.query;
+    const hostawayParams = new URLSearchParams({ limit: '20' });
+    if (checkIn) hostawayParams.set('availabilityDateStart', checkIn);
+    if (checkOut) hostawayParams.set('availabilityDateEnd', checkOut);
+    if (guests) hostawayParams.set('availabilityGuestNumber', guests);
+    if (location) hostawayParams.set('city', location);
+
+    const listingsRes = await fetch(`https://api.hostaway.com/v1/listings?${hostawayParams}`, {
       headers: { Authorization: `Bearer ${access_token}` },
     });
     if (!listingsRes.ok) throw new Error('Could not fetch listings');
