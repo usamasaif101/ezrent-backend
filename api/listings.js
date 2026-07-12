@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     const { access_token } = await tokenRes.json();
 
     const { checkIn, checkOut, guests, location } = req.query;
-    const hostawayParams = new URLSearchParams({ limit: '20' });
+    const hostawayParams = new URLSearchParams({ limit: '100', isBookingEngineActive: '1' });
     if (checkIn) hostawayParams.set('availabilityDateStart', checkIn);
     if (checkOut) hostawayParams.set('availabilityDateEnd', checkOut);
     if (guests) hostawayParams.set('availabilityGuestNumber', guests);
