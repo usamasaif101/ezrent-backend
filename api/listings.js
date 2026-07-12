@@ -30,7 +30,9 @@ export default async function handler(req, res) {
     if (!listingsRes.ok) throw new Error('Could not fetch listings');
     const data = await listingsRes.json();
 
-    const simplified = (data.result || []).map((l) => ({
+    const simplified = (data.result || [])
+    .filter((l) => l.isBookingEngineActive)
+    .map((l) => ({
       id: l.id,
       title: l.name,
       image: l.listingImages?.[0]?.url || null,
