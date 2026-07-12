@@ -23,7 +23,11 @@ export default async function handler(req, res) {
     if (!listingsRes.ok) throw new Error('Could not fetch listings');
     const data = await listingsRes.json();
 
-    const cities = [...new Set((data.result || []).map((l) => l.city).filter(Boolean))];
+    const cities = [...new Set((data.result || [])
+      .filter((l) => l.isBookingEngineActive !== false && l.isBookingEngineActive !== 0)
+      .map((l) => l.city)
+      .filter(Boolean))];
+
     res.status(200).json({ cities });
   } catch (err) {
     res.status(500).json({ error: err.message });
