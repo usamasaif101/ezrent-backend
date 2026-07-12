@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     if (!tokenRes.ok) throw new Error('Could not get access token');
     const { access_token } = await tokenRes.json();
 
-    const listingsRes = await fetch('https://api.hostaway.com/v1/listings?limit=500', {
+    const listingsRes = await fetch('https://api.hostaway.com/v1/listings?limit=500&isBookingEngineActive=1', {
       headers: { Authorization: `Bearer ${access_token}` },
     });
     if (!listingsRes.ok) throw new Error('Could not fetch listings');
