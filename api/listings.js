@@ -33,14 +33,17 @@ export default async function handler(req, res) {
     const simplified = (data.result || [])
       .filter((l) => l.isBookingEngineActive !== false && l.isBookingEngineActive !== 0)
       .map((l) => ({
-        id: l.id,
-        title: l.name,
-        image: l.listingImages?.[0]?.url || null,
-        price: l.price,
-        bedrooms: l.bedroomsNumber,
-        bathrooms: l.bathroomsNumber,
-        guests: l.personCapacity,
-      }));
+        .map((l) => ({
+          id: l.id,
+          title: l.name,
+          image: l.listingImages?.[0]?.url || null,
+          images: (l.listingImages || []).map((img) => img.url),
+          price: l.price,
+          bedrooms: l.bedroomsNumber,
+          bathrooms: l.bathroomsNumber,
+          guests: l.personCapacity,
+          city: l.city,
+        }));
 
     res.status(200).json({ listings: simplified });
   } catch (err) {
