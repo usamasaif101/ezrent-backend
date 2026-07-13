@@ -18,7 +18,7 @@ export default async function handler(req, res) {
     const { access_token } = await tokenRes.json();
 
     const { checkIn, checkOut, guests, location } = req.query;
-    const baseParams = { isBookingEngineActive: '1' };
+    const baseParams = { isBookingEngineActive: '1', includeResources: '1' };
     if (checkIn) baseParams.availabilityDateStart = checkIn;
     if (checkOut) baseParams.availabilityDateEnd = checkOut;
     if (guests) baseParams.availabilityGuestNumber = guests;
@@ -52,6 +52,7 @@ export default async function handler(req, res) {
       bathrooms: l.bathroomsNumber,
       guests: l.personCapacity,
       city: l.city,
+      amenities: (l.listingAmenities || []).map((a) => a.amenityName).filter(Boolean),
     }));
 
     res.status(200).json({ listings: simplified });
