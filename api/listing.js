@@ -35,6 +35,9 @@ export default async function handler(req, res) {
       price: l.price, bedrooms: l.bedroomsNumber, bathrooms: l.bathroomsNumber,
       guests: l.personCapacity, city: l.city,
       amenities: amenityNames,
+      lat: l.lat, lng: l.lng,
+      checkInTimeStart: l.checkInTimeStart, checkOutTime: l.checkOutTime,
+      maxPetsAllowed: l.maxPetsAllowed,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
