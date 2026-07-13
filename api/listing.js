@@ -23,29 +23,16 @@ export default async function handler(req, res) {
     const activeCheckRes = await fetch('https://api.hostaway.com/v1/listings?isBookingEngineActive=1&limit=500', {
       headers: { Authorization: `Bearer ${access_token}` },
     });
-    if (activeCheckRes.ok) {
-      const activeData = await activeCheckRes.json();
-      const isActive = (activeData.result || []).some((item) => String(item.id) === String(id));
-      if (!isActive) {
-        return res.status(404).json({ error: 'Listing not available' });
-      }
-    }
-
-    const listingRes = await fetch(`https://api.hostaway.com/v1/listings/${id}?includeResources=1`, {
-      headers: { Authorization: `Bearer ${access_token}` },
-    });
-    if (!listingRes.ok) throw new Error('Could not fetch listing');
-    const data = await listingRes.json();
-    const l = data.result;
-
-    const amenityNames = (l.listingAmenities || []).map((a) => a.amenityName).filter(Boolean);
+    const activeData = activeCheckRes.ok ? await activeCheckRes.json() : null;
 
     res.status(200).json({
-      id: l.id, title: l.name, description: l.description,
-      images: (l.listingImages || []).map((img) => img.url),
-      price: l.price, bedrooms: l.bedroomsNumber, bathrooms: l.bathroomsNumber,
-      guests: l.personCapacity, city: l.city,
-      amenities: amenityNames,
+      debug: {
+        activeCheckOk: activeCheckRes.ok,
+        activeCheckStatus: activeCheckRes.status,
+        totalActiveListings: activeData?.result?.length ?? null,
+        idsReturned: activeData?.result?.map((item) => item.id) ?? null,
+        isThisIdInList: activeData?.result?.some((item) => String(item.id) === String(id)) ?? null,
+      },
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
