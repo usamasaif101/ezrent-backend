@@ -20,33 +20,33 @@ export default async function handler(req, res) {
     if (!tokenRes.ok) throw new Error('Could not get access token');
     const { access_token } = await tokenRes.json();
 
-    const [listingRes, amenitiesRes] = await Promise.all([
-      fetch(`https://api.hostaway.com/v1/listings/${id}?includeResources=1`, {
-        headers: { Authorization: `Bearer ${access_token}` },
-      }),
-      fetch('https://api.hostaway.com/v1/amenities', {
-        headers: { Authorization: `Bearer ${access_token}` },
-      }),
-    ]);
+    const activeCheckRes = await fetch('https://api.hostaway.com/v1/listings?isBookingEngineActive=1&limit=500', {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+    if (activeCheckRes.ok) {
+      const activeData = await activeCheckRes.json();
+      const isActive = (activeData.result || []).some((item) => String(item.id) === String(id));
+      if (!isActive) {
+        return res.status(404).json({ error: 'Listing not available' });
+      }
+    }
+
+    const listingRes = await fetch(`https://api.hostaway.com/v1/listings/${id}?includeResources=1`, {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
     if (!listingRes.ok) throw new Error('Could not fetch listing');
     const data = await listingRes.json();
     const l = data.result;
 
-    if (l.isBookingEngineActive === false || l.isBookingEngineActive === 0) {
-      return res.status(404).json({ error: 'Listing not available' });
-    }
+    const amenityNames = (l.listingAmenities || []).map((a) => a.amenityName).filter(Boolean);
 
-    let amenityNames = [];
-    if (amenitiesRes.ok) {
-      const amenitiesData = await amenitiesRes.json();
-      const idToName = {};
-      (amenitiesData.result || []).forEach((a) => { idToName[a.id] = a.name; });
-      amenityNames = (l.listingAmenities || [])
-        .map((la) => idToName[la.amenityId])
-        .filter(Boolean);
-    }
-
-    res.status(200).json({ raw: l });
+    res.status(200).json({
+      id: l.id, title: l.name, description: l.description,
+      images: (l.listingImages || []).map((img) => img.url),
+      price: l.price, bedrooms: l.bedroomsNumber, bathrooms: l.bathroomsNumber,
+      guests: l.personCapacity, city: l.city,
+      amenities: amenityNames,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
