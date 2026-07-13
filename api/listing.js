@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     const { access_token } = await tokenRes.json();
 
     const [listingRes, amenitiesRes] = await Promise.all([
-      fetch(`https://api.hostaway.com/v1/listings/${id}`, {
+      fetch(`https://api.hostaway.com/v1/listings/${id}?includeResources=1`, {
         headers: { Authorization: `Bearer ${access_token}` },
       }),
       fetch('https://api.hostaway.com/v1/amenities', {
