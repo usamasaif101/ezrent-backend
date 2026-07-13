@@ -33,18 +33,17 @@ export default async function handler(req, res) {
     const simplified = (data.result || [])
       .filter((l) => l.isBookingEngineActive !== false && l.isBookingEngineActive !== 0)
       .map((l) => ({
-        .map((l) => ({
-          id: l.id,
-          title: l.name,
-          image: l.listingImages?.[0]?.url || null,
-          images: (l.listingImages || []).map((img) => img.url),
-          price: l.price,
-          bedrooms: l.bedroomsNumber,
-          bathrooms: l.bathroomsNumber,
-          guests: l.personCapacity,
-          city: l.city,
-        }));
-
+        id: l.id,
+        title: l.name,
+        image: l.listingImages?.[0]?.url || null,
+        images: (l.listingImages || []).map((img) => img.url),
+        price: l.price,
+        bedrooms: l.bedroomsNumber,
+        beds: l.bedsNumber,
+        bathrooms: l.bathroomsNumber,
+        guests: l.personCapacity,
+        city: l.city,
+      }));
     res.status(200).json({ listings: simplified });
   } catch (err) {
     res.status(500).json({ error: err.message });
