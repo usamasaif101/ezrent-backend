@@ -18,32 +18,42 @@ export default async function handler(req, res) {
     const { access_token } = await tokenRes.json();
 
     const { checkIn, checkOut, guests, location } = req.query;
-    const hostawayParams = new URLSearchParams({ limit: '100', isBookingEngineActive: '1' });
-    if (checkIn) hostawayParams.set('availabilityDateStart', checkIn);
-    if (checkOut) hostawayParams.set('availabilityDateEnd', checkOut);
-    if (guests) hostawayParams.set('availabilityGuestNumber', guests);
-    if (location) hostawayParams.set('city', location);
+    const baseParams = { isBookingEngineActive: '1' };
+    if (checkIn) baseParams.availabilityDateStart = checkIn;
+    if (checkOut) baseParams.availabilityDateEnd = checkOut;
+    if (guests) baseParams.availabilityGuestNumber = guests;
+    if (location) baseParams.city = location;
 
-    const listingsRes = await fetch(`https://api.hostaway.com/v1/listings?${hostawayParams}`, {
-      headers: { Authorization: `Bearer ${access_token}` },
-    });
-    if (!listingsRes.ok) throw new Error('Could not fetch listings');
-    const data = await listingsRes.json();
+    const batchSize = 100;
+    let offset = 0;
+    let allResults = [];
 
-    const simplified = (data.result || [])
-      .filter((l) => l.isBookingEngineActive !== false && l.isBookingEngineActive !== 0)
-      .map((l) => ({
-        id: l.id,
-        title: l.name,
-        image: l.listingImages?.[0]?.url || null,
-        images: (l.listingImages || []).map((img) => img.url),
-        price: l.price,
-        bedrooms: l.bedroomsNumber,
-        beds: l.bedsNumber,
-        bathrooms: l.bathroomsNumber,
-        guests: l.personCapacity,
-        city: l.city,
-      }));
+    while (true) {
+      const hostawayParams = new URLSearchParams({ ...baseParams, limit: String(batchSize), offset: String(offset) });
+      const listingsRes = await fetch(`https://api.hostaway.com/v1/listings?${hostawayParams}`, {
+        headers: { Authorization: `Bearer ${access_token}` },
+      });
+      if (!listingsRes.ok) throw new Error('Could not fetch listings');
+      const data = await listingsRes.json();
+      const batch = data.result || [];
+      allResults = allResults.concat(batch);
+      if (batch.length < batchSize) break;
+      offset += batchSize;
+    }
+
+    const simplified = allResults.map((l) => ({
+      id: l.id,
+      title: l.name,
+      image: l.listingImages?.[0]?.url || null,
+      images: (l.listingImages || []).map((img) => img.url),
+      price: l.price,
+      bedrooms: l.bedroomsNumber,
+      beds: l.bedsNumber,
+      bathrooms: l.bathroomsNumber,
+      guests: l.personCapacity,
+      city: l.city,
+    }));
+
     res.status(200).json({ listings: simplified });
   } catch (err) {
     res.status(500).json({ error: err.message });
