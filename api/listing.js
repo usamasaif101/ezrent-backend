@@ -20,19 +20,21 @@ export default async function handler(req, res) {
     if (!tokenRes.ok) throw new Error('Could not get access token');
     const { access_token } = await tokenRes.json();
 
-    const activeCheckRes = await fetch('https://api.hostaway.com/v1/listings?isBookingEngineActive=1&limit=500', {
+    const listingRes = await fetch(`https://api.hostaway.com/v1/listings/${id}?includeResources=1`, {
       headers: { Authorization: `Bearer ${access_token}` },
     });
-    const activeData = activeCheckRes.ok ? await activeCheckRes.json() : null;
+    if (!listingRes.ok) throw new Error('Could not fetch listing');
+    const data = await listingRes.json();
+    const l = data.result;
+
+    const amenityNames = (l.listingAmenities || []).map((a) => a.amenityName).filter(Boolean);
 
     res.status(200).json({
-      debug: {
-        activeCheckOk: activeCheckRes.ok,
-        activeCheckStatus: activeCheckRes.status,
-        totalActiveListings: activeData?.result?.length ?? null,
-        idsReturned: activeData?.result?.map((item) => item.id) ?? null,
-        isThisIdInList: activeData?.result?.some((item) => String(item.id) === String(id)) ?? null,
-      },
+      id: l.id, title: l.name, description: l.description,
+      images: (l.listingImages || []).map((img) => img.url),
+      price: l.price, bedrooms: l.bedroomsNumber, bathrooms: l.bathroomsNumber,
+      guests: l.personCapacity, city: l.city,
+      amenities: amenityNames,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
