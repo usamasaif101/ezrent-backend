@@ -46,13 +46,7 @@ export default async function handler(req, res) {
         .filter(Boolean);
     }
 
-    res.status(200).json({
-      id: l.id, title: l.name, description: l.description,
-      images: (l.listingImages || []).map((img) => img.url),
-      price: l.price, bedrooms: l.bedroomsNumber, bathrooms: l.bathroomsNumber,
-      guests: l.personCapacity, city: l.city,
-      amenities: amenityNames,
-    });
+    res.status(200).json({ raw: l });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
