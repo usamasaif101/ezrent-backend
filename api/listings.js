@@ -37,6 +37,9 @@ export default async function handler(req, res) {
         title: l.name,
         image: l.listingImages?.[0]?.url || null,
         price: l.price,
+        bedrooms: l.bedroomsNumber,
+        bathrooms: l.bathroomsNumber,
+        guests: l.personCapacity,
       }));
 
     res.status(200).json({ listings: simplified });
