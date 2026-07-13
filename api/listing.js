@@ -38,6 +38,10 @@ export default async function handler(req, res) {
       lat: l.lat, lng: l.lng,
       checkInTimeStart: l.checkInTimeStart, checkOutTime: l.checkOutTime,
       maxPetsAllowed: l.maxPetsAllowed,
+      cancellationPolicy: l.cancellationPolicy,
+      minNights: l.minNights, maxNights: l.maxNights,
+      instantBookable: l.instantBookable,
+      houseRules: l.houseRules,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
