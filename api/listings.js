@@ -17,31 +17,29 @@ export default async function handler(req, res) {
     if (!tokenRes.ok) throw new Error('Could not get access token');
     const { access_token } = await tokenRes.json();
 
-    const { checkIn, checkOut, guests, location } = req.query;
-    const baseParams = { isBookingEngineActive: '1', includeResources: '1' };
-    if (checkIn) baseParams.availabilityDateStart = checkIn;
-    if (checkOut) baseParams.availabilityDateEnd = checkOut;
-    if (guests) baseParams.availabilityGuestNumber = guests;
-    if (location) baseParams.city = location;
+    const { checkIn, checkOut, guests, location, page } = req.query;
+    const pageSize = 20;
+    const currentPage = Math.max(1, parseInt(page, 10) || 1);
+    const offset = (currentPage - 1) * pageSize;
 
-    const batchSize = 100;
-    let offset = 0;
-    let allResults = [];
+    const hostawayParams = new URLSearchParams({
+      isBookingEngineActive: '1',
+      includeResources: '1',
+      limit: String(pageSize),
+      offset: String(offset),
+    });
+    if (checkIn) hostawayParams.set('availabilityDateStart', checkIn);
+    if (checkOut) hostawayParams.set('availabilityDateEnd', checkOut);
+    if (guests) hostawayParams.set('availabilityGuestNumber', guests);
+    if (location) hostawayParams.set('city', location);
 
-    while (true) {
-      const hostawayParams = new URLSearchParams({ ...baseParams, limit: String(batchSize), offset: String(offset) });
-      const listingsRes = await fetch(`https://api.hostaway.com/v1/listings?${hostawayParams}`, {
-        headers: { Authorization: `Bearer ${access_token}` },
-      });
-      if (!listingsRes.ok) throw new Error('Could not fetch listings');
-      const data = await listingsRes.json();
-      const batch = data.result || [];
-      allResults = allResults.concat(batch);
-      if (batch.length < batchSize) break;
-      offset += batchSize;
-    }
+    const listingsRes = await fetch(`https://api.hostaway.com/v1/listings?${hostawayParams}`, {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+    if (!listingsRes.ok) throw new Error('Could not fetch listings');
+    const data = await listingsRes.json();
 
-    const simplified = allResults.map((l) => ({
+    const simplified = (data.result || []).map((l) => ({
       id: l.id,
       title: l.name,
       image: l.listingImages?.[0]?.url || null,
@@ -55,7 +53,12 @@ export default async function handler(req, res) {
       amenities: (l.listingAmenities || []).map((a) => a.amenityName).filter(Boolean),
     }));
 
-    res.status(200).json({ listings: simplified });
+    res.status(200).json({
+      listings: simplified,
+      totalCount: data.count ?? simplified.length,
+      page: currentPage,
+      pageSize,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
