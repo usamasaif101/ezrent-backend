@@ -28,7 +28,7 @@ export default async function handler(req, res) {
         Authorization: `Bearer ${access_token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ body }),
+      body: JSON.stringify({ body, isIncoming: 1 }),
     });
 
     const responseText = await sendRes.text();
