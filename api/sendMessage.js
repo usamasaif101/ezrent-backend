@@ -29,10 +29,24 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({ body }),
     });
-    if (!sendRes.ok) throw new Error('Could not send message');
-    const data = await sendRes.json();
 
-    res.status(200).json(data.result);
+    const responseText = await sendRes.text();
+    let responseData;
+    try {
+      responseData = JSON.parse(responseText);
+    } catch (e) {
+      responseData = { raw: responseText };
+    }
+
+    if (!sendRes.ok) {
+      return res.status(sendRes.status).json({
+        error: 'Hostaway rejected the message',
+        hostawayStatus: sendRes.status,
+        hostawayResponse: responseData,
+      });
+    }
+
+    res.status(200).json(responseData.result || responseData);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
