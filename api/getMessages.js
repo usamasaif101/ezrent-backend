@@ -20,14 +20,13 @@ export default async function handler(req, res) {
     if (!tokenRes.ok) throw new Error('Could not get access token');
     const { access_token } = await tokenRes.json();
 
-    const convRes = await fetch(`https://api.hostaway.com/v1/conversations/${conversationId}?includeResources=1`, {
+    const messagesRes = await fetch(`https://api.hostaway.com/v1/conversations/${conversationId}/messages`, {
       headers: { Authorization: `Bearer ${access_token}` },
     });
-    if (!convRes.ok) throw new Error('Could not fetch conversation');
-    const convData = await convRes.json();
-    const conversation = convData.result;
+    if (!messagesRes.ok) throw new Error('Could not fetch messages');
+    const messagesData = await messagesRes.json();
 
-    const messages = (conversation?.conversationMessages || []).map((m) => ({
+    const messages = (messagesData.result || []).map((m) => ({
       id: m.id,
       body: m.body,
       isIncoming: m.isIncoming === 1,
