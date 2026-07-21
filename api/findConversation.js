@@ -43,18 +43,17 @@ export default async function handler(req, res) {
       return res.status(200).json({ found: false, reservationId: reservation.id });
     }
 
-    const convRes = await fetch(`https://api.hostaway.com/v1/conversations/${conversationSummary.id}?includeResources=1`, {
+    const messagesRes = await fetch(`https://api.hostaway.com/v1/conversations/${conversationSummary.id}/messages`, {
       headers: { Authorization: `Bearer ${access_token}` },
     });
-    if (!convRes.ok) throw new Error('Could not fetch full conversation');
-    const convData = await convRes.json();
-    const conversation = convData.result;
+    if (!messagesRes.ok) throw new Error('Could not fetch messages');
+    const messagesData = await messagesRes.json();
 
     res.status(200).json({
       found: true,
       reservationId: reservation.id,
-      conversationId: conversation.id,
-      messages: (conversation.conversationMessages || []).map((m) => ({
+      conversationId: conversationSummary.id,
+      messages: (messagesData.result || []).map((m) => ({
         id: m.id,
         body: m.body,
         isIncoming: m.isIncoming === 1,
